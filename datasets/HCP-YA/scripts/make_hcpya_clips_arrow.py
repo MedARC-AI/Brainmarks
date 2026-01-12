@@ -90,7 +90,8 @@ def main(args):
     # volume space for a424 and mni, otherwise cifti space
     # TODO: hacky, the reader should know what input space it needs. we shouldn't need
     # to remember this in every script.
-    if args.space in {"a424", "mni", "mni_cortex"}:
+    # TDOO: indeed, this sucks
+    if args.space in {"a424", "mni", "mni_cortex", "schaefer400_tians3_buckner7"}:
         for split, split_paths in path_splits.items():
             path_splits[split] = [
                 p.replace("_Atlas_MSMAll.dtseries.nii", ".nii.gz") for p in split_paths

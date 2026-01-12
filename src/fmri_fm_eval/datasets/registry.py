@@ -47,7 +47,7 @@ def import_dataset_plugins():
             try:
                 plugins[name] = importlib.import_module(f"fmri_fm_eval.datasets.{name}")
             except Exception as exc:
-                _logger.warning(f"Import dataset plugin {name} failed: {exc}", exc_info=True)
+                _logger.warning(f"Import dataset plugin {name} failed: {exc}")
     return plugins
 
 

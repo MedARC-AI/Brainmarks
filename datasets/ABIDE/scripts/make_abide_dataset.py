@@ -44,7 +44,7 @@ def main(args):
     # list of included bold paths (one per sub)
     curated_paths = np.loadtxt(ROOT / "metadata/ABIDE_curated_paths.txt", dtype=str)
 
-    if args.space in {"a424", "mni", "mni_cortex"}:
+    if args.space in {"a424", "mni", "mni_cortex", "schaefer400_tians3_buckner7"}:
         suffix = "_space-MNI152NLin6Asym_res-2_desc-preproc_bold.nii.gz"
     else:
         suffix = "_space-fsLR_den-91k_bold.dtseries.nii"

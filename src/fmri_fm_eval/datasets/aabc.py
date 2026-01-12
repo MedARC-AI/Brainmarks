@@ -1,5 +1,7 @@
 import os
+import json
 
+import fsspec
 import datasets as hfds
 
 from fmri_fm_eval.datasets.base import HFDataset
@@ -11,7 +13,7 @@ assert AABC_ROOT is not None, (
     "Please set it to the directory containing AABC data. "
     "Example: export AABC_ROOT=/path/to/aabc-eval"
 )
-AABC_ROOT = Path(AABC_ROOT)
+
 AABC_TARGET_MAP_DICT = {
     # Demographics
     "sex": "aabc_target_map_sex.json",
@@ -34,12 +36,15 @@ def _create_aabc(space: str, target: str, **kwargs):
     target_map_path = AABC_TARGET_MAP_DICT[target]
     target_map_path = f"{AABC_ROOT}/targets/{target_map_path}"
 
+    with fsspec.open(target_map_path, "r") as f:
+        target_map = json.load(f)
+
     dataset_dict = {}
     splits = ["train", "validation", "test"]
     for split in splits:
         url = f"{AABC_ROOT}/aabc.{space}.arrow/{split}"
         dataset = hfds.load_dataset("arrow", data_files=f"{url}/*.arrow", split="train", **kwargs)
-        dataset = HFDataset(dataset, target_key=target_key, target_map_path=target_map_path)
+        dataset = HFDataset(dataset, target_key=target_key, target_map=target_map)
         dataset_dict[split] = dataset
 
     return dataset_dict
@@ -96,4 +101,3 @@ def aabc_cryst_iq(space: str, **kwargs):
 @register_dataset
 def aabc_memory(space: str, **kwargs):
     return _create_aabc(space, target="memory", **kwargs)
-

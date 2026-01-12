@@ -3,14 +3,17 @@ import json
 import logging
 import sys
 import tempfile
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
 import datasets as hfds
 import numpy as np
 import pandas as pd
+from cloudpathlib import AnyPath, CloudPath, S3Path
 
 import fmri_fm_eval.nisc as nisc
 import fmri_fm_eval.readers as readers
+import fmri_fm_eval.utils as ut
 
 logging.basicConfig(
     format="[%(levelname)s %(asctime)s]: %(message)s",
@@ -18,6 +21,7 @@ logging.basicConfig(
     datefmt="%y-%m-%d %H:%M:%S",
 )
 logging.getLogger("nibabel").setLevel(logging.ERROR)
+logging.getLogger("botocore").setLevel(logging.ERROR)  # quiet aws credential log msg
 
 _logger = logging.getLogger(__name__)
 
@@ -34,7 +38,8 @@ MAX_NUM_TRS = 120
 
 
 def main(args):
-    outdir = ROOT / f"data/processed/ppmi.{args.space}.arrow"
+    out_root = AnyPath(args.out_root or (ROOT / "data/processed"))
+    outdir = out_root / f"ppmi.{args.space}.arrow"
     _logger.info("Generating dataset: %s", outdir)
     if outdir.exists():
         _logger.warning("Output %s exists; exiting.", outdir)
@@ -53,30 +58,20 @@ def main(args):
             curated_paths[sub] = path
     curated_paths = list(curated_paths.values())
 
-    if args.space in {"a424", "mni", "mni_cortex"}:
+    if args.space in {"a424", "mni", "mni_cortex", "schaefer400_tians3_buckner7"}:
         suffix = "_space-MNI152NLin6Asym_res-2_desc-preproc_bold.nii.gz"
     else:
         suffix = "_space-fsLR_den-91k_bold.dtseries.nii"
 
     # preprocessed data paths
-    # note, preprocessed fmriprep data should go in the dataset folder under data/
-    fmriprep_root = ROOT / "data/fmriprep"
-    curated_paths = [fmriprep_root / p.replace("_bold.nii.gz", suffix) for p in curated_paths]
+    curated_paths = [p.replace("_bold.nii.gz", suffix) for p in curated_paths]
 
     # mapping of subs to assigned splits
     sub_split_map = {sub: split for sub, split in zip(curated_df["Subject"], curated_df["split"])}
-
-    missing_paths = [p for p in curated_paths if not p.exists()]
-    if missing_paths:
-        _logger.error(f"Missing {len(missing_paths)} files. First few:")
-        for p in missing_paths[:5]:
-            _logger.error(f"  {p}")
-        return 1
-
     # data paths for each split
     path_splits = {split: [] for split in SPLITS}
     for path in curated_paths:
-        sub_with_prefix = str(path.relative_to(fmriprep_root)).split("/")[0]
+        sub_with_prefix = path.split("/")[0]
         sub = sub_with_prefix.split("-")[1]
         split = sub_split_map[sub]
         path_splits[split].append(path)
@@ -84,6 +79,9 @@ def main(args):
     # load the data reader for the target space and look up the data dimension
     reader = readers.READER_DICT[args.space]()
     dim = readers.DATA_DIMS[args.space]
+
+    # root can be local or remote.
+    root = AnyPath(args.root or ROOT / "data/fmriprep")
 
     # define features
     features = hfds.Features(
@@ -113,30 +111,38 @@ def main(args):
                 features=features,
                 gen_kwargs={
                     "paths": paths,
+                    "root": root,
                     "curated_df": curated_df,
-                    "root": fmriprep_root,
                     "reader": reader,
-                    "dim": dim,
                 },
                 num_proc=args.num_proc,
                 split=hfds.NamedSplit(split),
                 cache_dir=tmpdir,
+                # otherwise fingerprint crashes on mni space, ig bc of hashing the reader
+                fingerprint=f"ppmi-{args.space}-{split}",
             )
         dataset = hfds.DatasetDict(dataset_dict)
-        outdir.parent.mkdir(exist_ok=True, parents=True)
-        dataset.save_to_disk(outdir, max_shard_size="300MB")
-        _logger.info(f"Dataset saved to {outdir}")
+
+        if isinstance(outdir, S3Path):
+            _logger.info("Saving to s3: %s", outdir)
+            tmp_outdir = Path(tmpdir) / outdir.name
+            # in theory save_to_disk should support s3, but idk why it wasn't working
+            dataset.save_to_disk(tmp_outdir, max_shard_size="300MB")
+            ut.rsync(tmp_outdir, outdir)
+        else:
+            _logger.info("Saving locally: %s", outdir)
+            dataset.save_to_disk(outdir, max_shard_size="300MB")
 
 
-def generate_samples(paths, *, curated_df, root, reader, dim):
-    for path in paths:
-        sidecar_path = path.parent / (path.name.split(".")[0] + ".json")
+def generate_samples(paths, *, root, curated_df, reader):
+    for path, fullpath in prefetch(root, paths):
+        sidecar_path = fullpath.parent / (fullpath.name.split(".")[0] + ".json")
         with sidecar_path.open() as f:
             sidecar_data = json.load(f)
         tr = float(sidecar_data["RepetitionTime"])
 
         # Extract subject and session from path
-        stem = path.name.split(".")[0]
+        stem = fullpath.name.split(".")[0]
         meta = dict(item.split("-") for item in stem.split("_") if "-" in item)
         sub = meta["sub"]
 
@@ -152,7 +158,7 @@ def generate_samples(paths, *, curated_df, root, reader, dim):
             "dx": row["Group"],
         }
 
-        series = reader(path)
+        series = reader(fullpath)
         series = nisc.resample_timeseries(series, tr=tr, new_tr=TARGET_TR, kind="pchip")
 
         T, D = series.shape
@@ -163,7 +169,7 @@ def generate_samples(paths, *, curated_df, root, reader, dim):
 
         sample = {
             **meta,
-            "path": str(path.relative_to(root)),
+            "path": str(path),
             "n_frames": MAX_NUM_TRS,
             "tr": TARGET_TR,
             "bold": series.astype(np.float16),
@@ -173,9 +179,45 @@ def generate_samples(paths, *, curated_df, root, reader, dim):
         yield sample
 
 
+def prefetch(root: AnyPath, paths: list[str], *, max_workers: int = 1):
+    """Prefetch files from remote storage."""
+
+    with tempfile.TemporaryDirectory(prefix="prefetch-") as tmpdir:
+
+        def fn(path: str):
+            fullpath = root / path
+            if isinstance(fullpath, CloudPath):
+                tmppath = Path(tmpdir) / path
+                tmppath.parent.mkdir(parents=True, exist_ok=True)
+
+                # get sidecar too (hack)
+                stem = fullpath.name.split(".")[0]
+                sidecar = fullpath.parent / f"{stem}.json"
+                tmpsidecar = tmppath.parent / f"{stem}.json"
+                sidecar.download_to(tmpsidecar)
+
+                fullpath = fullpath.download_to(tmppath)
+
+            return path, fullpath
+
+        with ThreadPoolExecutor(max_workers) as executor:
+            futures = [executor.submit(fn, p) for p in paths]
+
+            for future in futures:
+                path, fullpath = future.result()
+                yield path, fullpath
+
+                if str(fullpath).startswith(tmpdir):
+                    fullpath.unlink()
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--space", type=str, default="fslr64k", choices=list(readers.READER_DICT))
+    parser.add_argument("--root", type=str, default=None)
+    parser.add_argument("--out-root", type=str, default=None)
+    parser.add_argument(
+        "--space", type=str, default="schaefer400", choices=list(readers.READER_DICT)
+    )
     parser.add_argument("--num_proc", "-j", type=int, default=32)
     args = parser.parse_args()
     sys.exit(main(args))

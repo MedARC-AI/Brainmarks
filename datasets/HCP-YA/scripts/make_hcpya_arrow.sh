@@ -6,7 +6,7 @@ if [[ -z $1 || $1 == "-h" || $1 == "--help" ]]; then
 fi
 
 DATASET=$1
-SPACEIDS="0 1 2 3 4 5"
+SPACEIDS="0 1 2 3 4 5 6"
 
 # all target spaces required by different models
 spaces=(
@@ -16,6 +16,7 @@ spaces=(
     a424
     mni
     mni_cortex
+    schaefer400_tians3_buckner7
 )
 
 # nb, volume data not currently stored locally
@@ -24,6 +25,7 @@ roots=(
     data/sourcedata/HCP_1200
     data/sourcedata/HCP_1200
     data/sourcedata/HCP_1200
+    s3://hcp-openaccess/HCP_1200
     s3://hcp-openaccess/HCP_1200
     s3://hcp-openaccess/HCP_1200
     s3://hcp-openaccess/HCP_1200

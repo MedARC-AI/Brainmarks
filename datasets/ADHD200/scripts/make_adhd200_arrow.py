@@ -101,13 +101,12 @@ def main(args):
                     "root": root,
                     "curated_df": curated_df,
                     "reader": reader,
-                    "dim": dim,
                 },
                 num_proc=args.num_proc,
                 split=hfds.NamedSplit(split),
                 cache_dir=tmpdir,
                 # otherwise fingerprint crashes on mni space, ig bc of hashing the reader
-                fingerprint=f"hcpya-rest1lr-{args.space}-{split}",
+                fingerprint=f"adhd200-{args.space}-{split}",
             )
         dataset = hfds.DatasetDict(dataset_dict)
 
@@ -123,7 +122,7 @@ def main(args):
 
 
 def generate_samples(
-    paths: list[Path], *, root: AnyPath, curated_df: pd.DataFrame, reader: readers.Reader, dim: int
+    paths: list[Path], *, root: AnyPath, curated_df: pd.DataFrame, reader: readers.Reader
 ):
     for path, fullpath in prefetch(root, paths):
         sidecar_path = fullpath.parent / (fullpath.name.split(".")[0] + ".json")
@@ -139,8 +138,7 @@ def generate_samples(
         series = nisc.resample_timeseries(series, tr=tr, new_tr=TARGET_TR, kind="pchip")
 
         T, D = series.shape
-        assert D == dim
-        assert T >= MAX_NUM_TRS, f"Path {path} does not have enough data ({T}<{MAX_NUM_TRS})"
+        assert T >= MAX_NUM_TRS, f"Path {path} has too few TRs ({T}<{MAX_NUM_TRS})"
 
         series = series[:MAX_NUM_TRS]
         series, mean, std = nisc.scale(series)
