@@ -61,6 +61,10 @@ brain-semantoks = [
     "brain-semantoks",
 ]
 
+neurostorm = [
+    "neurostorm",
+]
+
 [tool.setuptools_scm]
 version_file = "src/fmri_fm_eval/version.py"
 
@@ -72,6 +76,7 @@ swiftfmri = { git = "https://github.com/MedARC-AI/SwiFT.git", rev = "934e27a8929
 brainlm = { git = "https://github.com/MedARC-AI/BrainLM.git", rev = "e287e0fa0f2dda61b448614d92e9041cb38fa128" }
 brainharmonix = { git = "https://github.com/MedARC-AI/Brain-Harmony.git", rev = "5398f8f5540222973cf82d13ac1eb4c4b38af636" }
 brain-semantoks = { git = "https://github.com/SamGijsen/Brain-Semantoks.git", rev = "4b48b5942b2f7df60fe8aaf3f328733fad647b54" }
+neurostorm = { git = "https://github.com/ckadirt/NeuroSTORM.git"  }
 
 [tool.ruff]
 line-length = 100
