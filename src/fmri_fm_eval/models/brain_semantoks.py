@@ -24,7 +24,6 @@ HuggingFace: https://huggingface.co/SamGijsen/Brain-Semantoks
 """
 
 import math
-from typing import Iterable
 
 import torch
 import torch.nn as nn
@@ -41,6 +40,7 @@ PATCH_SIZE = 20
 NUM_ROIS = 457  # 400 Schaefer + 50 Tian + 7 Buckner
 NUM_NETWORKS = 9  # 7 Schaefer networks + 1 Tian + 1 Buckner
 EMBEDDING_DIM = 768
+
 
 class BrainSemantoksTransform:
     """
@@ -70,16 +70,9 @@ class BrainSemantoksTransform:
         self.num_networks = num_networks
         self.max_patches = target_length // patch_size  # 5 patches
 
-    def fit(self, train_dataset: Iterable) -> None:
-        """
-        Brain-Semantoks uses per-ROI z-scoring which is already done in the data.
-        No fitting required.
-        """
-        pass
-
     def __call__(self, sample: dict) -> dict:
         bold = sample["bold"]  # [T, D=457]
-        tr = sample["tr"]
+        tr = float(sample["tr"])
 
         # 1. Temporal resampling to target TR (2.0s)
         if abs(tr - self.target_tr) > 0.01:
@@ -90,7 +83,7 @@ class BrainSemantoksTransform:
 
         if T >= self.target_length:
             # Truncate to target length
-            bold = bold[:self.target_length]
+            bold = bold[: self.target_length]
             num_patches_with_data = self.max_patches
         else:
             # Pad to target length (model requires exactly 100 timepoints)
@@ -119,7 +112,9 @@ class BrainSemantoksTransform:
 
         return sample
 
-    def _resample_temporal(self, bold: torch.Tensor, source_tr: float, target_tr: float) -> torch.Tensor:
+    def _resample_temporal(
+        self, bold: torch.Tensor, source_tr: float, target_tr: float
+    ) -> torch.Tensor:
         """Resample timeseries using cubic interpolation with anti-aliasing for downsampling."""
         from fmri_fm_eval import nisc
 
@@ -131,6 +126,7 @@ class BrainSemantoksTransform:
             bold_np, source_tr, target_tr, kind="cubic", antialias=antialias
         )
         return torch.from_numpy(bold_resampled).to(bold.dtype)
+
 
 class BrainSemantoksWrapper(ModelWrapper):
     __space__: str = "schaefer400_tians3_buckner7"
@@ -172,6 +168,7 @@ class BrainSemantoksWrapper(ModelWrapper):
             patch_embeds=patch_embeds,
         )
 
+
 @register_model
 def brain_semantoks(**kwargs):
     """
@@ -205,9 +202,15 @@ def _create_encoder(network_map_path: str) -> nn.Module:
 
     # Tokenizer config from checkpoint config
     tokenizer_config = [
-        {'type': 'dense', 'kernel_size': 3, 'out_channels': 384, 'depthwise': False},
-        {'type': 'sgconv', 'kernel_size': 4, 'out_channels': 384,
-         'num_scales': 3, 'decay_min': 2.0, 'decay_max': 2.0},
+        {"type": "dense", "kernel_size": 3, "out_channels": 384, "depthwise": False},
+        {
+            "type": "sgconv",
+            "kernel_size": 4,
+            "out_channels": 384,
+            "num_scales": 3,
+            "decay_min": 2.0,
+            "decay_max": 2.0,
+        },
     ]
 
     encoder = CNN_TF(
@@ -221,9 +224,9 @@ def _create_encoder(network_map_path: str) -> nn.Module:
         heads=12,
         mlp_dim=3072,
         drop_path_rate=0.0,
-        layer_scale_init_value=0.1, 
+        layer_scale_init_value=0.1,
         emb_dropout=0.0,
-        do_masking=True,  
+        do_masking=True,
         tokenizer_config=tokenizer_config,
         tokenizer_final_norm="layer",
         tokenizer_pooling_type="mean",
