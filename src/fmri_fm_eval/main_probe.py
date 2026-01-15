@@ -7,6 +7,7 @@
 import argparse
 import datetime
 import json
+import importlib.metadata
 import math
 import time
 from collections import defaultdict
@@ -27,7 +28,6 @@ from omegaconf import DictConfig, OmegaConf
 from torch.utils.data import DataLoader, WeightedRandomSampler
 
 import fmri_fm_eval.utils as ut
-import fmri_fm_eval.version
 from fmri_fm_eval.classifiers import ClassifierGrid, create_classifier, list_classififiers
 from fmri_fm_eval.datasets.base import HFDataset
 from fmri_fm_eval.models.registry import create_model, list_models
@@ -79,7 +79,7 @@ def main(args: DictConfig):
     ut.setup_for_distributed(log_path=output_dir / "log.txt")
 
     print("fMRI foundation model probe eval")
-    print(f"version: {fmri_fm_eval.version.__version__}")
+    print(f"version: {importlib.metadata.version('fmri-fm-eval')}")
     print(ut.get_sha())
     print(f"cwd: {Path.cwd()}")
     print(f"start: {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
