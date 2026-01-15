@@ -436,6 +436,7 @@ def train_one_epoch(
     device: torch.device,
 ):
     model.train()
+    model.backbone.eval()
     use_cuda = device.type == "cuda"
     log_wandb = args.wandb and ut.is_main_process()
     print_freq = args.get("print_freq", 20) if not args.debug else 1
