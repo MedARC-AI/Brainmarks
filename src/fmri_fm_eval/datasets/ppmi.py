@@ -2,7 +2,7 @@ import os
 
 import datasets as hfds
 
-from fmri_fm_eval.datasets.base import HFDataset
+from fmri_fm_eval.datasets.base import HFDataset, HF_DOWNLOAD_CONFIG
 from fmri_fm_eval.datasets.registry import register_dataset
 
 PPMI_ROOT = os.getenv("PPMI_ROOT", "s3://medarc/fmri-datasets/eval")
@@ -13,7 +13,13 @@ def _create_ppmi(space: str, target: str, **kwargs):
     splits = ["train", "validation", "test"]
     for split in splits:
         url = f"{PPMI_ROOT}/ppmi.{space}.arrow/{split}"
-        dataset = hfds.load_dataset("arrow", data_files=f"{url}/*.arrow", split="train", **kwargs)
+        dataset = hfds.load_dataset(
+            "arrow",
+            data_files=f"{url}/*.arrow",
+            split="train",
+            download_config=HF_DOWNLOAD_CONFIG,
+            **kwargs,
+        )
         dataset = HFDataset(dataset, target_key=target)
         dataset_dict[split] = dataset
     return dataset_dict

@@ -4,7 +4,7 @@ from pathlib import Path
 
 import datasets as hfds
 
-from fmri_fm_eval.datasets.base import HFDataset
+from fmri_fm_eval.datasets.base import HFDataset, HF_DOWNLOAD_CONFIG
 from fmri_fm_eval.datasets.registry import register_dataset
 
 ADNI_ROOT = os.getenv("ADNI_ROOT")
@@ -49,7 +49,13 @@ def _create_adni(space: str, target: str, **kwargs):
     splits = ["train", "validation", "test"]
     for split in splits:
         url = f"{ADNI_ROOT}/adni.{space}.arrow/{split}"
-        dataset = hfds.load_dataset("arrow", data_files=f"{url}/*.arrow", split="train", **kwargs)
+        dataset = hfds.load_dataset(
+            "arrow",
+            data_files=f"{url}/*.arrow",
+            split="train",
+            download_config=HF_DOWNLOAD_CONFIG,
+            **kwargs,
+        )
 
         # For ADNI, we need custom target key mapping since targets are keyed by PTID_SCANDATE
         # We'll use a custom wrapper that builds the key from sub and visit
@@ -72,9 +78,9 @@ def build_sample_key(sub: str, visit: str) -> str:
     # Reconstruct PTID from sub
     # sub format: "168S6049" -> PTID format: "168_S_6049"
     # Find the 'S' position and insert underscores
-    s_pos = sub.find('S')
+    s_pos = sub.find("S")
     if s_pos > 0:
-        ptid = f"{sub[:s_pos]}_S_{sub[s_pos+1:]}"
+        ptid = f"{sub[:s_pos]}_S_{sub[s_pos + 1 :]}"
     else:
         ptid = sub  # Fallback
 

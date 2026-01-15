@@ -4,7 +4,7 @@ import json
 import fsspec
 import datasets as hfds
 
-from fmri_fm_eval.datasets.base import HFDataset
+from fmri_fm_eval.datasets.base import HFDataset, HF_DOWNLOAD_CONFIG
 from fmri_fm_eval.datasets.registry import register_dataset
 
 AABC_ROOT = os.getenv("AABC_ROOT")
@@ -43,7 +43,13 @@ def _create_aabc(space: str, target: str, **kwargs):
     splits = ["train", "validation", "test"]
     for split in splits:
         url = f"{AABC_ROOT}/aabc.{space}.arrow/{split}"
-        dataset = hfds.load_dataset("arrow", data_files=f"{url}/*.arrow", split="train", **kwargs)
+        dataset = hfds.load_dataset(
+            "arrow",
+            data_files=f"{url}/*.arrow",
+            split="train",
+            download_config=HF_DOWNLOAD_CONFIG,
+            **kwargs,
+        )
         dataset = HFDataset(dataset, target_key=target_key, target_map=target_map)
         dataset_dict[split] = dataset
 

@@ -1,3 +1,4 @@
+import os
 from pathlib import Path
 from typing import Any, Callable
 
@@ -5,6 +6,12 @@ import datasets as hfds
 import numpy as np
 import pandas as pd
 import torch
+
+hfds.disable_progress_bars()
+
+# parallelize download
+HF_NUM_PROC = min(int(os.getenv("OMP_NUM_THREADS", "8")), 8)
+HF_DOWNLOAD_CONFIG = hfds.DownloadConfig(num_proc=HF_NUM_PROC)
 
 
 class HFDataset(torch.utils.data.Dataset):
