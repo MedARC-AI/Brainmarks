@@ -110,7 +110,8 @@ def load_arrow_dataset(path: str | Path, cache_dir: str | Path | None = None, **
 
     # try handle race condition when multiple jobs attempt to download the same dataset
     # TODO: think more about this
-    with FileLock(f"{cache_dir}/.{path.name}.lock"):
+    dataset_name = str(path.relative_to(path.parents[1])).replace("/", "__")
+    with FileLock(f"{cache_dir}/.{dataset_name}.lock"):
         dataset = hfds.load_dataset(
             "arrow",
             data_files=f"{path}/*.arrow",
