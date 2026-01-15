@@ -94,9 +94,14 @@ def main(args: DictConfig):
 
     # dataset
     print(f"creating dataset: {args.dataset} ({backbone.__space__})")
-    dataset_dict = create_dataset(
-        args.dataset, space=backbone.__space__, **(args.dataset_kwargs or {})
-    )
+    try:
+        dataset_dict = create_dataset(
+            args.dataset, space=backbone.__space__, **(args.dataset_kwargs or {})
+        )
+    except FileNotFoundError:
+        print(f"dataset not found: {args.dataset} ({backbone.__space__}); exiting")
+        return
+
     for split, ds in dataset_dict.items():
         print(f"{split} (n={len(ds)}):\n{ds}\n")
     train_dataset: HFDataset = dataset_dict["train"]
