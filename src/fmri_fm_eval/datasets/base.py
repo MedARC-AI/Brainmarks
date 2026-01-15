@@ -6,6 +6,9 @@ import datasets as hfds
 import numpy as np
 import pandas as pd
 import torch
+from cloudpathlib import AnyPath
+from filelock import FileLock
+from datasets.config import HF_DATASETS_CACHE
 
 hfds.disable_progress_bars()
 
@@ -93,3 +96,27 @@ class HFDataset(torch.utils.data.Dataset):
         )
         s = f"HFDataset(\n{s}\n)"
         return s
+
+
+def load_arrow_dataset(path: str | Path, cache_dir: str | Path | None = None, **kwargs):
+    # try to give a more informative error message if a dataset doesn't exist
+    # hf error message is pretty useless
+    path = AnyPath(path)
+    if not path.exists():
+        raise FileNotFoundError(f"Dataset {path} does not exist")
+
+    cache_dir = Path(cache_dir or HF_DATASETS_CACHE)
+    cache_dir.mkdir(exist_ok=True, parents=True)
+
+    # try handle race condition when multiple jobs attempt to download the same dataset
+    # TODO: think more about this
+    with FileLock(f"{cache_dir}/.{path.name}.lock"):
+        dataset = hfds.load_dataset(
+            "arrow",
+            data_files=f"{path}/*.arrow",
+            split="train",
+            download_config=HF_DOWNLOAD_CONFIG,
+            cache_dir=cache_dir,
+            **kwargs,
+        )
+    return dataset

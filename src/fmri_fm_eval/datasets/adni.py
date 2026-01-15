@@ -4,15 +4,10 @@ from pathlib import Path
 
 import datasets as hfds
 
-from fmri_fm_eval.datasets.base import HFDataset, HF_DOWNLOAD_CONFIG
+from fmri_fm_eval.datasets.base import HFDataset, load_arrow_dataset
 from fmri_fm_eval.datasets.registry import register_dataset
 
-ADNI_ROOT = os.getenv("ADNI_ROOT")
-assert ADNI_ROOT is not None, (
-    "ADNI_ROOT environment variable is not set. "
-    "Please set it to the directory containing ADNI processed data. "
-)
-ADNI_ROOT = Path(ADNI_ROOT)
+ADNI_ROOT = Path(os.getenv("ADNI_ROOT", "s3://medarc/fmri-datasets/eval"))
 
 ADNI_TARGET_MAP_DICT = {
     # Demographics
@@ -49,13 +44,7 @@ def _create_adni(space: str, target: str, **kwargs):
     splits = ["train", "validation", "test"]
     for split in splits:
         url = f"{ADNI_ROOT}/adni.{space}.arrow/{split}"
-        dataset = hfds.load_dataset(
-            "arrow",
-            data_files=f"{url}/*.arrow",
-            split="train",
-            download_config=HF_DOWNLOAD_CONFIG,
-            **kwargs,
-        )
+        dataset = load_arrow_dataset(url, **kwargs)
 
         # For ADNI, we need custom target key mapping since targets are keyed by PTID_SCANDATE
         # We'll use a custom wrapper that builds the key from sub and visit
