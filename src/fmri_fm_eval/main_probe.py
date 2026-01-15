@@ -46,7 +46,7 @@ def main(args: DictConfig):
     if not args.get("name"):
         args.name = (
             f"{args.name_prefix}/"
-            f"{args.model}/{args.representation}__{args.classifier}/{args.dataset}"
+            f"{args.dataset}__{args.model}__{args.representation}__{args.classifier}"
         )
     args.output_dir = f"{args.output_root}/{args.name}"
     output_dir = Path(args.output_dir)

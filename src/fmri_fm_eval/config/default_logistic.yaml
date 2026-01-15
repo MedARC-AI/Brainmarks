@@ -1,9 +1,9 @@
 # Root output directory
 # Individual eval runs will be saved as:
 #
-#   output_root/{name_prefix}/{model}/{representation}/{dataset}
+#   output_root/{name_prefix}/{dataset}__{model}__{representation}__{classifier}
 output_root: output
-name_prefix: logistic_eval
+name_prefix: eval_logistic
 
 # Remote root for backing up results
 # currently only S3 supported
