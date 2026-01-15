@@ -36,7 +36,7 @@ prefetch_factor: 8
 balanced_sampling: false
 
 # Optimization
-epochs: 20
+epochs: 4
 steps_per_epoch: 500
 # total_batch_size = batch_size * accum_iter
 batch_size: 32
