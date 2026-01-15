@@ -1,13 +1,13 @@
 import json
 import os
-from pathlib import Path
 
 import datasets as hfds
+import fsspec
 
 from fmri_fm_eval.datasets.base import HFDataset, load_arrow_dataset
 from fmri_fm_eval.datasets.registry import register_dataset
 
-ADNI_ROOT = Path(os.getenv("ADNI_ROOT", "s3://medarc/fmri-datasets/eval"))
+ADNI_ROOT = os.getenv("ADNI_ROOT", "s3://medarc/fmri-datasets/eval")
 
 ADNI_TARGET_MAP_DICT = {
     # Demographics
@@ -36,8 +36,9 @@ def _create_adni(space: str, target: str, **kwargs):
     """
     # Load target map
     target_map_path = ADNI_TARGET_MAP_DICT[target]
-    target_map_path = ADNI_ROOT / "targets" / target_map_path
-    with open(target_map_path) as f:
+    target_map_path = f"{ADNI_ROOT}/targets/{target_map_path}"
+
+    with fsspec.open(target_map_path, "r") as f:
         target_map = json.load(f)
 
     dataset_dict = {}
@@ -80,6 +81,9 @@ def build_sample_key(sub: str, visit: str) -> str:
         scandate = visit  # Fallback
 
     return f"{ptid}_{scandate}"
+
+
+# TODO: fix this duplication
 
 
 class ADNIDataset(HFDataset):
