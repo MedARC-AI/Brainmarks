@@ -83,11 +83,13 @@ def main(args):
             "path": hfds.Value("string"),
             "n_frames": hfds.Value("int32"),
             "tr": hfds.Value("float32"),
+            "confounds": hfds.List(
+                hfds.List(hfds.Value("float32"))
+            ),  # List for variable column counts
+            "confounds_columns": hfds.List(hfds.Value("string")),
             "bold": hfds.Array2D(shape=(None, dim), dtype="float16"),
             "mean": hfds.Array2D(shape=(1, dim), dtype="float32"),
             "std": hfds.Array2D(shape=(1, dim), dtype="float32"),
-            "confounds": hfds.Sequence(hfds.Sequence(hfds.Value("float32"))), # Sequence(Sequence()) for variable column counts
-            "confounds_columns": hfds.Sequence(hfds.Value("string")),
         }
     )
 
@@ -175,7 +177,9 @@ def prefetch(root: AnyPath, paths: list[str], *, max_workers: int = 1):
 
                 # get confounds TSV file
                 confounds_prefix = stem.split("_space-")[0]
-                confounds_file = fullpath.parent / f"{confounds_prefix}_desc-confounds_timeseries.tsv"
+                confounds_file = (
+                    fullpath.parent / f"{confounds_prefix}_desc-confounds_timeseries.tsv"
+                )
                 tmp_confounds = tmppath.parent / f"{confounds_prefix}_desc-confounds_timeseries.tsv"
                 confounds_file.download_to(tmp_confounds)
 
