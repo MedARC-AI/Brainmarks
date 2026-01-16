@@ -152,7 +152,7 @@ class NeuroStormTransform:
         roi_path = tflow.get(
             "MNI152NLin6Asym", desc="brain", resolution=2, suffix="mask", extension="nii.gz"
         )
-        mask = nisc.read_nifti_data(roi_path) > 0  # (Z, Y, X)
+        mask = nisc.read_mni152_2mm_data(roi_path) > 0  # (Z, Y, X)
 
         self.mask = torch.from_numpy(mask)
         self.mask_shape = mask.shape

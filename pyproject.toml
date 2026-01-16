@@ -76,7 +76,7 @@ swiftfmri = { git = "https://github.com/MedARC-AI/SwiFT.git", rev = "934e27a8929
 brainlm = { git = "https://github.com/MedARC-AI/BrainLM.git", rev = "e287e0fa0f2dda61b448614d92e9041cb38fa128" }
 brainharmonix = { git = "https://github.com/MedARC-AI/Brain-Harmony.git", rev = "5398f8f5540222973cf82d13ac1eb4c4b38af636" }
 brain-semantoks = { git = "https://github.com/SamGijsen/Brain-Semantoks.git", rev = "4b48b5942b2f7df60fe8aaf3f328733fad647b54" }
-neurostorm = { git = "https://github.com/ckadirt/NeuroSTORM.git"  }
+neurostorm = { git = "https://github.com/ckadirt/NeuroSTORM.git", rev = "7fa3b96c8021735f1d84a81d0367b2568a2dc6e4"  }
 
 [tool.ruff]
 line-length = 100
