@@ -10,6 +10,7 @@ import json
 import importlib.metadata
 import math
 import time
+import traceback
 from collections import defaultdict
 from functools import partial
 from itertools import product
@@ -98,9 +99,9 @@ def main(args: DictConfig):
         dataset_dict = create_dataset(
             args.dataset, space=backbone.__space__, **(args.dataset_kwargs or {})
         )
-    except FileNotFoundError:
-        print(f"dataset not found: {args.dataset} ({backbone.__space__}); exiting")
-        return
+    except Exception as exc:
+        msg = traceback.format_exception_only(exc)[0]
+        print(f"error loading dataset: {args.dataset} ({backbone.__space__}); exiting\n\n{msg}")
 
     for split, ds in dataset_dict.items():
         print(f"{split} (n={len(ds)}):\n{ds}\n")
