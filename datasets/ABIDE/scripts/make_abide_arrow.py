@@ -86,6 +86,8 @@ def main(args):
             "bold": hfds.Array2D(shape=(None, dim), dtype="float16"),
             "mean": hfds.Array2D(shape=(1, dim), dtype="float32"),
             "std": hfds.Array2D(shape=(1, dim), dtype="float32"),
+            "confounds": hfds.Sequence(hfds.Sequence(hfds.Value("float32"))), # Sequence(Sequence()) for variable column counts
+            "confounds_columns": hfds.Sequence(hfds.Value("string")),
         }
     )
 
@@ -133,6 +135,11 @@ def generate_samples(paths: list[Path], *, root: AnyPath, reader: readers.Reader
         series = series[:MAX_NUM_TRS]
         series, mean, std = nisc.scale(series)
 
+        # Load and resample confounds
+        confounds, confounds_columns = nisc.load_fmriprep_confounds(fullpath)
+        confounds = nisc.resample_timeseries(confounds, tr=tr, new_tr=TARGET_TR, kind="pchip")
+        confounds = confounds[:MAX_NUM_TRS]
+
         sample = {
             "sub": meta["sub"],
             "site": meta["site"],
@@ -143,6 +150,8 @@ def generate_samples(paths: list[Path], *, root: AnyPath, reader: readers.Reader
             "bold": series.astype(np.float16),
             "mean": mean.astype(np.float32),
             "std": std.astype(np.float32),
+            "confounds": confounds.tolist(),  # Convert to list for Sequence(Sequence())
+            "confounds_columns": confounds_columns,
         }
         yield sample
 
@@ -163,6 +172,12 @@ def prefetch(root: AnyPath, paths: list[str], *, max_workers: int = 1):
                 sidecar = fullpath.parent / f"{stem}.json"
                 tmpsidecar = tmppath.parent / f"{stem}.json"
                 sidecar.download_to(tmpsidecar)
+
+                # get confounds TSV file
+                confounds_prefix = stem.split("_space-")[0]
+                confounds_file = fullpath.parent / f"{confounds_prefix}_desc-confounds_timeseries.tsv"
+                tmp_confounds = tmppath.parent / f"{confounds_prefix}_desc-confounds_timeseries.tsv"
+                confounds_file.download_to(tmp_confounds)
 
                 fullpath = fullpath.download_to(tmppath)
 

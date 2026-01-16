@@ -21,6 +21,7 @@ from typing import Any, Literal, NamedTuple
 import cortex
 import numpy as np
 import nibabel as nib
+import pandas as pd
 import scipy.interpolate
 import scipy.signal
 from matplotlib.tri import Triangulation
@@ -116,6 +117,42 @@ def read_gifti_surf_data(path: str | Path) -> np.ndarray:
 
     series = np.concatenate([series_lh, series_rh], axis=1)
     return series
+
+
+def load_fmriprep_confounds(bold_path: str | Path) -> tuple[np.ndarray, list[str]]:
+    """Load confounds from fMRIPrep output for any dataset.
+
+    The confounds file is expected to be in the same directory as the BOLD file,
+    with the naming pattern: {prefix}_desc-confounds_timeseries.tsv
+
+    Args:
+        bold_path: Path to BOLD file (*_bold.nii.gz or *_bold.dtseries.nii)
+
+    Returns:
+        confounds: array of shape (n_timesteps, n_confounds), float32
+        columns: list of column names
+    """
+    bold_path = Path(bold_path)
+
+    # Confounds file has same prefix (before _space-), different suffix
+    # e.g., sub-X_task-rest_run-1_space-fsLR_den-91k_bold.dtseries.nii
+    #    -> sub-X_task-rest_run-1_desc-confounds_timeseries.tsv
+    stem = bold_path.name
+    if "_space-" in stem:
+        prefix = stem.split("_space-")[0]
+    else:
+        # Fallback: remove everything after _bold
+        prefix = stem.split("_bold")[0]
+
+    confounds_path = bold_path.parent / f"{prefix}_desc-confounds_timeseries.tsv"
+
+    df = pd.read_csv(confounds_path, sep="\t")
+    confounds = df.values.astype(np.float32)
+    # Handle NaN values (first row often has NaN for derivatives)
+    confounds = np.nan_to_num(confounds, nan=0.0)
+    columns = df.columns.tolist()
+
+    return confounds, columns
 
 
 MNI152_2MM_SHAPE = (91, 109, 91)
