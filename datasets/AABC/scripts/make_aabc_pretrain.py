@@ -30,12 +30,7 @@ logging.getLogger("nibabel").setLevel(logging.ERROR)
 _logger = logging.getLogger(__name__)
 
 ROOT = Path(__file__).parents[1]
-AABC_ROOT = os.getenv("AABC_ROOT")
-assert AABC_ROOT is not None, (
-    "AABC_ROOT environment variable is not set. "
-    "Please set it to the directory containing AABC raw data. "
-)
-AABC_ROOT = Path(AABC_ROOT)
+AABC_ROOT = ROOT / "data" / "raw"
 # Pretraining uses batches 0-9 (10 batches)
 # Batches 10-19 are reserved for evaluation
 PRETRAIN_BATCHES = list(range(0, 10))

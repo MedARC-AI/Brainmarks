@@ -1,5 +1,4 @@
 import logging
-import os
 from pathlib import Path
 
 import datasets as hfds
@@ -18,7 +17,7 @@ NUM_PROC = 16
 
 ROOT = Path(__file__).parents[1]
 
-AABC_ROOT = Path(os.getenv("AABC_ROOT", "/teamspace/studios/this_studio/AABC_data"))
+AABC_ROOT = ROOT / "data" / "raw"
 
 
 def main():
