@@ -9,7 +9,7 @@ Supports parcellations: schaefer400, schaefer400_tians3, flat, a424, mni, mni_co
 
 Data paths:
 - Preprocessed data: data/fmriprep/output/
-- Curation JSON: scripts/ADNI_curation.json
+- Curation JSON: ADNI_curation.json
 - Output datasets: data/processed/
 """
 
@@ -44,7 +44,7 @@ ROOT = Path(__file__).parents[1]
 # Data paths relative to dataset root
 ADNI_FMRIPREP_ROOT = ROOT / "data/fmriprep"
 ADNI_OUTPUT = ADNI_FMRIPREP_ROOT / "output"
-ADNI_CURATION_JSON = ROOT / "scripts/ADNI_curation.json"
+ADNI_CURATION_JSON = ROOT / "ADNI_curation.json"
 
 # All data has TR=3.0s (filtered at curation stage)
 TARGET_TR = 3.0
