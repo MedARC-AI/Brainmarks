@@ -41,7 +41,3 @@ slurms
 # HCP-YA
 hcpya_restricted.csv
 hcpya_unrestricted.csv
-
-#AI stuff
-.claude
-.codex
