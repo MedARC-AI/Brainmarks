@@ -38,7 +38,7 @@ uv sync --python 3.11
 
 Brainmarks has two main evaluation modes.
 
-**Probe** — trains a frozen-backbone classifier head (linear, attention, or MLP):
+**Probe**: trains a frozen-backbone classifier head (linear, attention, or MLP):
 
 ```bash
 python -m brainmarks.main_probe <model> <representation> <classifier> <dataset>
@@ -46,7 +46,7 @@ python -m brainmarks.main_probe <model> <representation> <classifier> <dataset>
 python -m brainmarks.main_probe brainlm_vitmae_111m patch attn nsd_cococlip
 ```
 
-**Logistic** — extracts embeddings once and fits a logistic regression:
+**Logistic**: extracts embeddings once and fits a logistic regression:
 
 ```bash
 python -m brainmarks.main_logistic <model> <representation> <dataset>
@@ -72,7 +72,7 @@ All available options are documented in the default configs: [default_probe.yaml
 
 ## Datasets
 
-Benchmark datasets are distributed in Huggingface Arrow format hosted in the MedARC R2 bucket. To request access, fill out [this form](https://forms.gle/VGnakBFCBoNnUt2C7).
+Benchmark datasets are distributed in Huggingface Arrow format hosted in the Brainmarks R2 bucket. To request access, fill out [this form](https://forms.gle/VGnakBFCBoNnUt2C7).
 
 Once you have credentials, configure them as environment variables:
 

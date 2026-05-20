@@ -1,10 +1,7 @@
-import os
-
-
-from brainmarks.datasets.base import HFDataset, load_arrow_dataset
+from brainmarks.datasets.base import HFDataset, get_dataset_root, load_arrow_dataset
 from brainmarks.datasets.registry import register_dataset
 
-PPMI_ROOT = os.getenv("PPMI_ROOT", "s3://medarc/fmri-datasets/eval")
+PPMI_ROOT = get_dataset_root("ppmi")
 
 
 def _create_ppmi(space: str, target: str, **kwargs):

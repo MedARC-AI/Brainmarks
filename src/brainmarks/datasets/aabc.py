@@ -1,12 +1,11 @@
-import os
 import json
 
 import fsspec
 
-from brainmarks.datasets.base import HFDataset, load_arrow_dataset
+from brainmarks.datasets.base import HFDataset, get_dataset_root, load_arrow_dataset
 from brainmarks.datasets.registry import register_dataset
 
-AABC_ROOT = os.getenv("AABC_ROOT", "s3://medarc/fmri-datasets/eval")
+AABC_ROOT = get_dataset_root("aabc", private=True)
 
 AABC_TARGET_MAP_DICT = {
     # Demographics

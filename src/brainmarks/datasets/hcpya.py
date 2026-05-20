@@ -1,12 +1,10 @@
-import os
-
 import numpy as np
 import torch
 
-from brainmarks.datasets.base import HFDataset, load_arrow_dataset
+from brainmarks.datasets.base import HFDataset, get_dataset_root, load_arrow_dataset
 from brainmarks.datasets.registry import register_dataset
 
-HCPYA_ROOT = os.getenv("HCPYA_ROOT", "s3://medarc/fmri-datasets/eval")
+HCPYA_ROOT = get_dataset_root("hcpya")
 
 HCPYA_TASK21_TRIAL_TYPES = {
     "fear": 0,

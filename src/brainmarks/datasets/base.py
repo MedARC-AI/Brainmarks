@@ -16,6 +16,19 @@ hfds.disable_progress_bars()
 HF_NUM_PROC = min(int(os.getenv("OMP_NUM_THREADS", "8")), 8)
 HF_DOWNLOAD_CONFIG = hfds.DownloadConfig(num_proc=HF_NUM_PROC)
 
+DATA_ROOT = os.getenv("BRAINMARKS_DATA_ROOT", "s3://brainmarks/fmri-datasets/eval")
+PRIVATE_DATA_ROOT = os.getenv(
+    "BRAINMARKS_PRIVATE_DATA_ROOT", "s3://brainmarks-private/fmri-datasets/eval"
+)
+
+
+def get_dataset_root(name: str, private: bool = False) -> str:
+    """Resolve a dataset's S3/local root."""
+    override = os.getenv(f"{name.upper()}_ROOT")
+    if override:
+        return override
+    return PRIVATE_DATA_ROOT if private else DATA_ROOT
+
 
 class HFDataset(torch.utils.data.Dataset):
     def __init__(

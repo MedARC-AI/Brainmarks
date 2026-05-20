@@ -1,13 +1,12 @@
 import json
-import os
 
 import datasets as hfds
 import fsspec
 
-from brainmarks.datasets.base import HFDataset, load_arrow_dataset
+from brainmarks.datasets.base import HFDataset, get_dataset_root, load_arrow_dataset
 from brainmarks.datasets.registry import register_dataset
 
-ADNI_ROOT = os.getenv("ADNI_ROOT", "s3://medarc/fmri-datasets/eval")
+ADNI_ROOT = get_dataset_root("adni")
 
 ADNI_TARGET_MAP_DICT = {
     # Demographics

@@ -1,10 +1,7 @@
-import os
-
-
-from brainmarks.datasets.base import HFDataset, load_arrow_dataset
+from brainmarks.datasets.base import HFDataset, get_dataset_root, load_arrow_dataset
 from brainmarks.datasets.registry import register_dataset
 
-ADHD200_ROOT = os.getenv("ADHD200_ROOT", "s3://medarc/fmri-datasets/eval")
+ADHD200_ROOT = get_dataset_root("adhd200")
 
 
 def _create_adhd200(space: str, target: str, **kwargs):

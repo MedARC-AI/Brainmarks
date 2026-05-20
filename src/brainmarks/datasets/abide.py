@@ -1,12 +1,11 @@
 import json
-import os
 
 import fsspec
 
-from brainmarks.datasets.base import HFDataset, load_arrow_dataset
+from brainmarks.datasets.base import HFDataset, get_dataset_root, load_arrow_dataset
 from brainmarks.datasets.registry import register_dataset
 
-ABIDE_ROOT = os.getenv("ABIDE_ROOT", "s3://medarc/fmri-datasets/eval")
+ABIDE_ROOT = get_dataset_root("abide")
 
 ABIDE_TARGET_MAP_DICT = {
     "dx": "abide_target_map_dx.json",
