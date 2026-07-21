@@ -590,7 +590,7 @@ requires-dist = [
     { name = "nilearn" },
     { name = "numpy" },
     { name = "omegaconf" },
-    { name = "omnifmri", marker = "extra == 'omnifmri'", git = "https://github.com/clane9/Omni-fMRI.git?rev=aca9d2881c52a9e2329723d102e07985fe058162" },
+    { name = "omnifmri", marker = "extra == 'omnifmri'", git = "https://github.com/MedARC-AI/Omni-fMRI.git?rev=aca9d2881c52a9e2329723d102e07985fe058162" },
     { name = "pandas" },
     { name = "peft" },
     { name = "pycortex" },
@@ -3342,7 +3342,7 @@ wheels = [
 [[package]]
 name = "omnifmri"
 version = "0.1.0"
-source = { git = "https://github.com/clane9/Omni-fMRI.git?rev=aca9d2881c52a9e2329723d102e07985fe058162#aca9d2881c52a9e2329723d102e07985fe058162" }
+source = { git = "https://github.com/MedARC-AI/Omni-fMRI.git?rev=aca9d2881c52a9e2329723d102e07985fe058162#aca9d2881c52a9e2329723d102e07985fe058162" }
 dependencies = [
     { name = "einops" },
     { name = "nibabel" },
